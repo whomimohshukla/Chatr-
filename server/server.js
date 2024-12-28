@@ -82,6 +82,27 @@ io.on('connection', (socket) => {
     }
   });
 
+  // WebRTC signaling
+  socket.on('offer', ({ room, offer }) => {
+    console.log('Relaying offer in room:', room);
+    socket.to(room).emit('offer', { offer });
+  });
+
+  socket.on('answer', ({ room, answer }) => {
+    console.log('Relaying answer in room:', room);
+    socket.to(room).emit('answer', { answer });
+  });
+
+  socket.on('ice-candidate', ({ room, candidate }) => {
+    console.log('Relaying ICE candidate in room:', room);
+    socket.to(room).emit('ice-candidate', { candidate });
+  });
+
+  socket.on('start-video', ({ room }) => {
+    console.log('Starting video in room:', room);
+    socket.to(room).emit('start-video');
+  });
+
   socket.on('send-message', ({ room, message }) => {
     if (!message.trim()) return;
     

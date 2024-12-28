@@ -1,47 +1,38 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { io } from 'socket.io-client'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
+  UserCircleIcon,
   VideoCameraIcon,
   MicrophoneIcon,
   XMarkIcon,
-  PaperAirplaneIcon,
-  ArrowRightIcon,
-  FaceSmileIcon,
-  UserCircleIcon,
-  PhotoIcon,
-  GifIcon,
-  LanguageIcon,
-  HandRaisedIcon,
   FlagIcon,
-  ShareIcon,
-  DocumentTextIcon,
-  PhoneIcon,
-  ComputerDesktopIcon,
+  ArrowRightIcon,
+  PaperClipIcon,
+  PaperAirplaneIcon,
 } from '@heroicons/react/24/outline'
 
 export default function Chat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const socket = useRef()
-  const localVideoRef = useRef()
-  const remoteVideoRef = useRef()
   const chatContainerRef = useRef()
   const typingTimeout = useRef()
   const fileInputRef = useRef()
+  const peerConnection = useRef()
+  const localStream = useRef()
+  const localVideoRef = useRef()
+  const remoteVideoRef = useRef()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState([])
   const [isTyping, setIsTyping] = useState(false)
   const [partnerTyping, setPartnerTyping] = useState(false)
-  const [videoEnabled, setVideoEnabled] = useState(true)
-  const [audioEnabled, setAudioEnabled] = useState(true)
   const [currentRoom, setCurrentRoom] = useState(null)
   const [partner, setPartner] = useState(null)
   const [isConnecting, setIsConnecting] = useState(true)
   const [isConnected, setIsConnected] = useState(false)
-  const [localStream, setLocalStream] = useState(null)
   const [showControls, setShowControls] = useState(true)
   const [showEmoji, setShowEmoji] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
@@ -49,20 +40,27 @@ export default function Chat() {
   const [filters, setFilters] = useState([])
   const [sharedFiles, setSharedFiles] = useState([])
   const [showReport, setShowReport] = useState(false)
+  const [videoEnabled, setVideoEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   
-  const chatType = searchParams.get('type') || 'text'
+  const chatType = searchParams.get('type') || 'video'
   const interests = searchParams.get('interests')?.split(',').filter(Boolean) || []
 
   useEffect(() => {
-    // Initialize socket connection with basic configuration
-    socket.current = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
+    // Initialize socket connection with robust configuration
+    socket.current = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
     // Handle connection events
     socket.current.on('connect', () => {
       console.log('Connected to server');
       setIsConnected(true);
       setIsConnecting(false);
-      socket.current.emit('join-queue');
+      joinQueue();
     });
 
     socket.current.on('connect_error', (error) => {
@@ -93,7 +91,7 @@ export default function Chat() {
       }]);
     });
 
-    socket.current.on('match-found', ({ room }) => {
+    socket.current.on('match-found', async ({ room, users }) => {
       console.log('Match found in room:', room);
       setCurrentRoom(room);
       setIsConnecting(false);
@@ -141,39 +139,9 @@ export default function Chat() {
     });
 
     return () => {
-      if (socket.current) {
-        socket.current.disconnect();
-      }
+      cleanup();
     };
   }, []);
-
-  const setupVideoChat = async () => {
-    try {
-      const constraints = {
-        video: {
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 },
-          aspectRatio: 16 / 9,
-          facingMode: 'user',
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints)
-      setLocalStream(stream)
-      
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream
-      }
-    } catch (error) {
-      console.error('Error accessing media devices:', error)
-      alert('Unable to access camera or microphone. Please check your permissions.')
-    }
-  }
 
   const handleFileShare = async (e) => {
     const file = e.target.files[0]
@@ -362,261 +330,288 @@ export default function Chat() {
     }
   };
 
-  const handleTyping = (e) => {
-    setMessage(e.target.value)
-    if (!isTyping && currentRoom) {
-      setIsTyping(true)
-      socket.current.emit('typing', { room: currentRoom })
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
-    
-    if (typingTimeout.current) {
-      clearTimeout(typingTimeout.current)
+  };
+
+  const handleMessageChange = (e) => {
+    setMessage(e.target.value);
+    handleTyping();
+  };
+
+  const handleTyping = () => {
+    if (!isTyping) {
+      setIsTyping(true);
+      socket.current?.emit('typing', { isTyping: true });
+      
+      // Clear typing indicator after delay
+      typingTimeout.current = setTimeout(() => {
+        setIsTyping(false);
+        socket.current?.emit('typing', { isTyping: false });
+      }, 2000);
     }
-    
-    typingTimeout.current = setTimeout(() => {
-      setIsTyping(false)
-      socket.current.emit('stop-typing', { room: currentRoom })
-    }, 1000)
-  }
+  };
+
+  const initializeWebRTC = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        },
+        audio: true
+      });
+      
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      
+      // Store stream for peer connection
+      localStream.current = stream;
+      setVideoEnabled(true);
+      setAudioEnabled(true);
+      
+      // Initialize peer connection after getting stream
+      createPeerConnection();
+    } catch (error) {
+      console.error('Error initializing WebRTC:', error);
+      if (error.name === 'NotReadableError') {
+        alert('Unable to access camera. Please make sure no other application is using your camera and try again.');
+      } else if (error.name === 'NotAllowedError') {
+        alert('Please allow camera and microphone access to use video chat.');
+      } else {
+        alert('Failed to initialize video chat. Please check your camera and microphone settings.');
+      }
+      // Fall back to text-only chat
+      setChatType('text');
+    }
+  };
+
+  const createAndSendOffer = async () => {
+    try {
+      if (!peerConnection.current) {
+        throw new Error('PeerConnection not initialized');
+      }
+
+      const offer = await peerConnection.current.createOffer();
+      await peerConnection.current.setLocalDescription(offer);
+      socket.current.emit('offer', { room: currentRoom, offer });
+    } catch (error) {
+      console.error('Error creating offer:', error);
+      throw error;
+    }
+  };
 
   const toggleVideo = () => {
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0]
+    if (localStream.current) {
+      const videoTrack = localStream.current.getVideoTracks()[0];
       if (videoTrack) {
-        videoTrack.enabled = !videoEnabled
-        setVideoEnabled(!videoEnabled)
+        videoTrack.enabled = !videoTrack.enabled;
+        setVideoEnabled(videoTrack.enabled);
       }
     }
-  }
+  };
 
   const toggleAudio = () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0]
+    if (localStream.current) {
+      const audioTrack = localStream.current.getAudioTracks()[0];
       if (audioTrack) {
-        audioTrack.enabled = !audioEnabled
-        setAudioEnabled(!audioEnabled)
+        audioTrack.enabled = !audioTrack.enabled;
+        setAudioEnabled(audioTrack.enabled);
       }
     }
-  }
+  };
 
   const cleanup = () => {
+    // Stop all tracks in the local stream
+    if (localStream.current) {
+      localStream.current.getTracks().forEach(track => track.stop());
+    }
+
+    // Close peer connection
+    if (peerConnection.current) {
+      peerConnection.current.close();
+      peerConnection.current = null;
+    }
+
+    // Clean up video elements
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+
+    // Disconnect socket
     if (socket.current) {
-      socket.current.disconnect()
+      socket.current.disconnect();
     }
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop())
-    }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-6 pt-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-8rem)] max-w-7xl mx-auto">
-          {/* Video Chat Section */}
-          <div className="relative h-[calc(50vh-4rem)] lg:h-full order-2 lg:order-1 rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 hover:shadow-blue-500/20">
-            <div className="relative w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
-              {chatType === 'video' && (
-                <>
-                  {/* Remote Video */}
-                  <video
-                    ref={remoteVideoRef}
-                    autoPlay
-                    playsInline
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  
-                  {/* Local Video */}
-                  <div className="absolute bottom-4 right-4 rounded-2xl overflow-hidden shadow-xl border-2 border-white/20 backdrop-blur-sm z-10 group transition-transform hover:scale-105">
-                    <video
-                      ref={localVideoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-32 h-[72px] md:w-48 md:h-[108px] object-cover"
-                    />
-                  </div>
+    <div className="min-h-screen dark:bg-gray-900 bg-gray-100 pt-16 pb-8 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-blue-500/5 to-transparent dark:from-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-purple-500/5 to-transparent dark:from-purple-500/10 rounded-full blur-3xl"></div>
+      </div>
 
-                  {/* Video Controls */}
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-black/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/10 z-20">
-                    <button
-                      onClick={toggleAudio}
-                      className={`p-3 md:p-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 ${
-                        audioEnabled 
-                          ? 'bg-white/90 text-gray-900 hover:bg-white' 
-                          : 'bg-red-500/90 text-white hover:bg-red-500'
-                      }`}
-                    >
-                      <MicrophoneIcon className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                    <button
-                      onClick={toggleVideo}
-                      className={`p-3 md:p-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 ${
-                        videoEnabled 
-                          ? 'bg-white/90 text-gray-900 hover:bg-white' 
-                          : 'bg-red-500/90 text-white hover:bg-red-500'
-                      }`}
-                    >
-                      <VideoCameraIcon className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                    <button
-                      onClick={handleEndChat}
-                      className="p-3 md:p-4 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all transform hover:scale-105 active:scale-95"
-                    >
-                      <XMarkIcon className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* Loading State */}
-              {isConnecting && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                  <div className="text-center px-6">
-                    <div className="w-16 h-16 md:w-20 md:h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 animate-pulse">
-                      Finding Someone...
-                    </h2>
-                    <p className="text-sm md:text-base text-gray-300 max-w-md">
-                      {interests.length > 0
-                        ? `Looking for people interested in: ${interests.join(', ')}`
-                        : 'Looking for anyone to chat with'}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Chat Section */}
-          <div className="flex flex-col h-[calc(50vh-4rem)] lg:h-full order-1 lg:order-2 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 hover:shadow-blue-500/20">
-            {/* Chat Header */}
-            <div className="px-6 py-4 md:px-8 md:py-5 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                      <UserCircleIcon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          {/* Main Content */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
+            {/* Video Section */}
+            <div className="xl:col-span-2 h-full flex flex-col">
+              <div className="bg-white dark:bg-gray-800 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 flex-1 min-h-[300px] lg:min-h-[400px] relative">
+                {chatType === 'video' && (
+                  <>
+                    {/* Remote Video */}
+                    <div className="absolute inset-0">
+                      <video
+                        ref={remoteVideoRef}
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    {isConnected && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" />
+
+                    {/* Local Video */}
+                    <div className="absolute top-4 right-4 w-32 sm:w-48 lg:w-56 aspect-video">
+                      <video
+                        ref={localVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+                      />
+                    </div>
+
+                    {/* Video Controls */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-4 z-20">
+                      <button
+                        onClick={toggleAudio}
+                        className={`p-3 sm:p-4 rounded-full ${
+                          audioEnabled 
+                            ? 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600' 
+                            : 'bg-red-500 hover:bg-red-600'
+                        } text-gray-700 dark:text-white backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-200`}
+                      >
+                        <MicrophoneIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </button>
+                      <button
+                        onClick={toggleVideo}
+                        className={`p-3 sm:p-4 rounded-full ${
+                          videoEnabled 
+                            ? 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600' 
+                            : 'bg-red-500 hover:bg-red-600'
+                        } text-gray-700 dark:text-white backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-200`}
+                      >
+                        <VideoCameraIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </button>
+                      <button
+                        onClick={handleEndChat}
+                        className="p-3 sm:p-4 rounded-full bg-red-500 hover:bg-red-600 text-white backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-200"
+                      >
+                        <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </button>
+                    </div>
+
+                    {/* Loading State */}
+                    {!isConnected && (
+                      <div className="absolute inset-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center justify-center z-30">
+                        <div className="text-center px-6">
+                          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Looking for someone...</h3>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">
+                            {interests.length > 0
+                              ? `Matching with people interested in: ${interests.join(', ')}`
+                              : 'Finding a random person to chat with'}
+                          </p>
+                        </div>
+                      </div>
                     )}
-                  </div>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
-                      {isConnected ? 'Stranger' : 'Connecting...'}
-                    </h2>
-                    {partnerTyping && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
-                        typing...
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setShowReport(true)}
-                    className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <FlagIcon className="w-5 h-5 md:w-6 md:h-6 text-gray-600 dark:text-gray-400" />
-                  </button>
-                  <button
-                    onClick={handleEndChat}
-                    className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <ArrowRightIcon className="w-5 h-5 md:w-6 md:h-6 text-gray-600 dark:text-gray-400" />
-                  </button>
-                </div>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Messages */}
-            <div
-              ref={chatContainerRef}
-              className="flex-1 overflow-y-auto px-6 py-4 md:px-8 md:py-6 space-y-4 md:space-y-6 bg-gray-50 dark:bg-gray-900"
-            >
-              {messages.map((msg, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={`flex flex-col max-w-[85%] md:max-w-[75%] ${
-                    msg.senderId === socket.current?.id ? 'ml-auto' : 'mr-auto'
-                  }`}
+            {/* Chat Section */}
+            <div className="bg-white dark:bg-gray-800 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col h-full shadow-2xl border border-gray-200 dark:border-gray-700">
+              {/* Chat Header */}
+              <div className="bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm px-4 sm:px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    {isConnected ? 'Connected' : 'Finding partner...'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowReport(true)}
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                 >
-                  <div
-                    className={`rounded-2xl px-4 py-3 md:px-5 md:py-4 shadow-sm ${
-                      msg.senderId === socket.current?.id
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-sm'
-                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm'
-                    }`}
+                  <FlagIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Messages */}
+              <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+              >
+                {messages.map((msg, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex ${msg.type === 'system' ? 'justify-center' : msg.senderId === socket.current?.id ? 'justify-end' : 'justify-start'}`}
                   >
-                    {msg.type === 'file' ? (
-                      <div className="flex items-center space-x-3">
-                        <DocumentTextIcon className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
-                        <a
-                          href={msg.fileData}
-                          download={msg.fileName}
-                          className="text-sm md:text-base font-medium underline hover:text-blue-100 truncate max-w-[200px] md:max-w-[300px]"
-                        >
-                          {msg.fileName}
-                        </a>
+                    {msg.type === 'system' ? (
+                      <div className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-4 py-1.5 rounded-full text-sm backdrop-blur-sm">
+                        {msg.message}
                       </div>
                     ) : (
-                      <p className="text-sm md:text-base break-words leading-relaxed">
+                      <div
+                        className={`max-w-[85%] sm:max-w-[75%] px-4 py-2.5 rounded-2xl shadow-lg ${
+                          msg.senderId === socket.current?.id
+                            ? 'bg-blue-500 text-white ml-4'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white mr-4'
+                        }`}
+                      >
                         {msg.message}
-                      </p>
+                      </div>
                     )}
-                  </div>
-                  <span className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-1.5 px-1">
-                    {new Date(msg.timestamp).toLocaleTimeString()}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
+                  </motion.div>
+                ))}
+              </div>
 
-            {/* Chat Input */}
-            <div className="px-6 py-4 md:px-8 md:py-5 border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                <div className="flex space-x-2">
+              {/* Chat Input */}
+              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
+                <div className="flex space-x-3">
+                  <input
+                    type="text"
+                    value={message}
+                    onChange={handleMessageChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 border border-gray-200 dark:border-gray-600 text-sm sm:text-base"
+                  />
                   <button
-                    type="button"
-                    onClick={() => setShowEmoji(!showEmoji)}
-                    className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={handleSendMessage}
+                    disabled={!message.trim()}
+                    className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-all duration-200 text-sm sm:text-base ${
+                      message.trim()
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20 transform hover:scale-105'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-600'
+                    }`}
                   >
-                    <FaceSmileIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <PhotoIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                    Send
                   </button>
                 </div>
-                <input
-                  type="text"
-                  className="flex-1 h-12 md:h-14 px-5 text-base md:text-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl border-2 border-transparent focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 transition-all"
-                  placeholder={isConnected ? "Type a message..." : "Waiting for connection..."}
-                  value={message}
-                  onChange={handleTyping}
-                  disabled={!isConnected}
-                />
-                <button
-                  type="submit"
-                  disabled={!isConnected || !message.trim()}
-                  className="h-12 md:h-14 px-5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-blue-500/25"
-                >
-                  <PaperAirplaneIcon className="w-6 h-6 md:w-7 md:h-7" />
-                </button>
-              </form>
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleFileShare}
-                accept="image/*,.pdf,.doc,.docx"
-              />
+              </div>
             </div>
           </div>
         </div>
@@ -629,35 +624,31 @@ export default function Chat() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm flex items-center justify-center p-4 z-50"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.95, y: 10 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="w-full max-w-md mx-4 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl"
+              exit={{ scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl border border-gray-200 dark:border-gray-700"
             >
-              <div className="p-6 md:p-8">
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  Report User
-                </h3>
-                <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-8">
-                  Are you sure you want to report this user for inappropriate behavior?
-                </p>
-                <div className="flex justify-end space-x-4">
-                  <button
-                    onClick={() => setShowReport(false)}
-                    className="px-6 py-3 text-base md:text-lg font-medium rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white transition-all transform hover:scale-105 active:scale-95"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleReport}
-                    className="px-6 py-3 text-base md:text-lg font-medium rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-red-500/25"
-                  >
-                    Report
-                  </button>
-                </div>
+              <h3 className="text-xl text-gray-900 dark:text-white font-semibold mb-4">Report User</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-8">
+                Are you sure you want to report this user for inappropriate behavior?
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowReport(false)}
+                  className="px-6 py-2.5 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReport}
+                  className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/20 transform hover:scale-105 transition-all duration-200"
+                >
+                  Report
+                </button>
               </div>
             </motion.div>
           </motion.div>
