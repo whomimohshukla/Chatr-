@@ -11,7 +11,12 @@ const server = createServer(app);
 
 // Basic middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.CLIENT_URL]
+    : process.env.CLIENT_URL,
+  credentials: true
+}));
 
 // Health check route
 app.get('/', (req, res) => {
@@ -21,10 +26,19 @@ app.get('/', (req, res) => {
 // Configure Socket.IO with basic settings
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"]
-  }
+    origin: process.env.NODE_ENV === 'production' 
+      ? [process.env.CLIENT_URL]
+      : process.env.CLIENT_URL,
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
+
+const PORT = process.env.PORT || 3000;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // Store active users and their rooms
 const users = new Map();
@@ -83,6 +97,7 @@ io.on('connection', (socket) => {
   });
 
   // WebRTC signaling
+  // working od webrtc
   socket.on('offer', ({ room, offer }) => {
     console.log('Relaying offer in room:', room);
     socket.to(room).emit('offer', { offer });
@@ -136,7 +151,6 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
