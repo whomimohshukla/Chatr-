@@ -4,15 +4,31 @@ import { motion } from 'framer-motion'
 import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export default function Navbar() {
-  const [isDark, setIsDark] = useState(false)
+  // Compute initial theme synchronously to avoid light flash; default to dark
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const stored = localStorage.getItem('theme')
+      if (stored === 'dark') return true
+      if (stored === 'light') return false
+      // fallback to system preference; if unavailable, default dark
+      return window.matchMedia('(prefers-color-scheme: dark)').matches || true
+    } catch {
+      return true
+    }
+  })
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  // Persist changes and toggle class when user toggles theme
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+    try {
+      if (isDark) {
+        document.documentElement.classList.add('dark')
+        localStorage.setItem('theme', 'dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+        localStorage.setItem('theme', 'light')
+      }
+    } catch {}
   }, [isDark])
 
   const navItems = [
