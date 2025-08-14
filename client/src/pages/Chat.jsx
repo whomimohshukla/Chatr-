@@ -43,6 +43,8 @@ export default function Chat() {
   const countryNames = {
     any: 'Any', us: 'United States', in: 'India', gb: 'United Kingdom', ca: 'Canada', au: 'Australia', de: 'Germany', fr: 'France', br: 'Brazil'
   }
+  // End screen state: 'stopped' when Stop pressed, 'closed' when X pressed
+  const [endState, setEndState] = useState(null)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [handRaised, setHandRaised] = useState(false)
   const [filters, setFilters] = useState([])
@@ -437,9 +439,36 @@ export default function Chat() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Support Enter and NumpadEnter, allow Shift+Enter for newline. Include legacy keyCode/which.
+    if (e.isComposing || e.nativeEvent?.isComposing) return; // ignore while IME composing
+    const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13 || e.which === 13;
+    if (isEnter && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      if (message && message.trim()) {
+        handleSendMessage();
+      }
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.isComposing || e.nativeEvent?.isComposing) return;
+    const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13 || e.which === 13;
+    if (isEnter && !e.shiftKey) {
+      e.preventDefault();
+      if (message && message.trim()) {
+        handleSendMessage();
+      }
+    }
+  };
+
+  const handleKeyUp = (e) => {
+    if (e.isComposing || e.nativeEvent?.isComposing) return;
+    const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13 || e.which === 13;
+    if (isEnter && !e.shiftKey) {
+      e.preventDefault();
+      if (message && message.trim()) {
+        handleSendMessage();
+      }
     }
   };
 
@@ -610,7 +639,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen dark:bg-gray-900 bg-gray-100 pt-16 pb-8 relative overflow-hidden">
+    <div className="min-h-screen dark:bg-gray-900 bg-gray-100 pt-16 pb-36 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-blue-500/5 to-transparent dark:from-blue-500/10 rounded-full blur-3xl"></div>
@@ -618,12 +647,12 @@ export default function Chat() {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           {/* Main Content */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[calc(100vh-12rem)] place-items-center place-content-center">
             {/* Video Section */}
-            <div className="xl:col-span-2 h-full flex flex-col">
-              <div className="bg-white dark:bg-gray-800 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 flex-1 min-h-[300px] lg:min-h-[400px] relative">
+            <div className="xl:col-span-2 h-full flex flex-col w-full">
+              <div className="bg-white dark:bg-gray-800 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 relative w-full max-w-[1100px] aspect-video mx-auto">
                 {chatType === 'video' && (
                   <>
                     {/* Remote Video */}
@@ -632,12 +661,12 @@ export default function Chat() {
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain md:object-cover"
                       />
                     </div>
 
                     {/* Top Overlay Info (OmeTV-like) */}
-                    <div className="absolute top-0 left-0 right-0 p-3 pointer-events-none z-20">
+                    <div className="absolute top-0 left-0 right-0 p-3 pointer-events-none z-20 flex justify-center">
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 text-white text-sm backdrop-blur-md border border-white/10 shadow">
                         <span className="text-base">{countryFlags[selectedCountry] || '🌐'}</span>
                         <span>
@@ -657,8 +686,9 @@ export default function Chat() {
                       />
                     </div>
 
-                    {/* Video Controls */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-4 z-20">
+                    {/* Video Controls (centered on screen) */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                      <div className="flex items-center gap-4 bg-black/30 dark:bg-black/40 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full border border-white/10 shadow-lg">
                       <button
                         onClick={toggleAudio}
                         className={`p-3 sm:p-4 rounded-full ${
@@ -680,12 +710,43 @@ export default function Chat() {
                         <VideoCameraIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </button>
                       <button
-                        onClick={handleEndChat}
+                        onClick={() => { setEndState('closed'); handleEndChat(); }}
                         className="p-3 sm:p-4 rounded-full bg-red-500 hover:bg-red-600 text-white backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-200"
                       >
                         <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </button>
+                      </div>
                     </div>
+
+                    {/* End/Stop Overlay */}
+                    {endState && (
+                      <div className="absolute inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-[90%] text-center shadow-2xl border border-gray-200 dark:border-gray-700">
+                          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                            {endState === 'stopped' ? 'Chat Stopped' : 'Chat Ended'}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-300 mb-6">
+                            {endState === 'stopped' 
+                              ? 'You have stopped the current chat. You can find a new partner anytime.'
+                              : 'You ended the chat. Want to meet someone new?'}
+                          </p>
+                          <div className="flex items-center justify-center gap-3 flex-wrap">
+                            <button
+                              onClick={() => { setEndState(null); handleNext(); }}
+                              className="px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                            >
+                              Next
+                            </button>
+                            <button
+                              onClick={() => setEndState(null)}
+                              className="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Loading State */}
                     {!isConnected && (
@@ -707,70 +768,16 @@ export default function Chat() {
             </div>
 
             {/* Chat Section */}
-            <div className="bg-white dark:bg-gray-800 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col h-full shadow-2xl border border-gray-200 dark:border-gray-700">
-              {/* Chat Header */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 flex-wrap border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col h-full shadow-2xl border border-gray-200 dark:border-gray-700 w-full mx-auto">
+              {/* Chat Header (minimal, centered) */}
+              <div className="bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-center gap-2 flex-wrap border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
                   <span className="text-gray-900 dark:text-white font-medium">
                     {isConnected ? 'Connected' : 'Finding partner...'}
                   </span>
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-xs">
-                    <span className="text-base leading-none">{countryFlags[selectedCountry] || '🌐'}</span>
-                    <span>{countryNames[selectedCountry] || 'Any'}</span>
-                    <span className="opacity-60">•</span>
-                    <span>{selectedGender === 'any' ? 'Any gender' : (selectedGender === 'male' ? 'Male' : 'Female')}</span>
-                  </span>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap justify-end">
-                  {/* Country selector */}
-                  <select
-                    value={selectedCountry}
-                    onChange={(e) => setSelectedCountry(e.target.value)}
-                    className="px-2 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-sm"
-                    title="Country filter"
-                  >
-                    <option value="any">Any Country</option>
-                    <option value="us">United States</option>
-                    <option value="in">India</option>
-                    <option value="gb">United Kingdom</option>
-                    <option value="ca">Canada</option>
-                    <option value="au">Australia</option>
-                    <option value="de">Germany</option>
-                    <option value="fr">France</option>
-                    <option value="br">Brazil</option>
-                  </select>
-
-                  {/* Gender quick toggle: Male */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedGender(g => g === 'male' ? 'any' : 'male')}
-                    className={`px-3 py-2 rounded-lg text-sm border ${selectedGender === 'male' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700'}`}
-                    title="Toggle Male filter"
-                  >
-                    Male {selectedGender === 'male' ? '✓' : ''}
-                  </button>
-
-                  {/* Stop and Next */}
-                  <button
-                    onClick={handleStop}
-                    className="px-3 sm:px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm sm:text-base hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
-                  >
-                    Stop
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    className="px-3 sm:px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base shadow-lg shadow-blue-500/20 transition-all"
-                  >
-                    Next
-                  </button>
-                  <button
-                    onClick={() => setShowReport(true)}
-                    className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                  >
-                    <FlagIcon className="w-5 h-5" />
-                  </button>
-                </div>
+                
               </div>
 
               {/* Messages */}
@@ -833,6 +840,9 @@ export default function Chat() {
                     value={message}
                     onChange={handleMessageChange}
                     onKeyDown={handleKeyDown}
+                    onKeyPress={handleKeyPress}
+                    onKeyUp={handleKeyUp}
+                    autoFocus
                     placeholder="Type a message..."
                     className="flex-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 border border-gray-200 dark:border-gray-600 text-sm sm:text-base"
                   />
@@ -872,6 +882,69 @@ export default function Chat() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Control Bar (Centered) */}
+      <div className="fixed bottom-0 inset-x-0 z-40">
+        <div className="mx-auto max-w-7xl">
+          <div className="m-3 px-3 sm:px-6 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
+            {/* Status */}
+            <div className="flex items-center gap-2">
+              <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+              <span className="text-gray-900 dark:text-white font-medium text-sm sm:text-base">{isConnected ? 'Connected' : 'Finding partner...'}</span>
+            </div>
+
+            {/* Country + Gender pill */}
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm">
+              <span className="text-base leading-none">{countryFlags[selectedCountry] || '🌐'}</span>
+              <span className="font-medium">{countryNames[selectedCountry] || 'Any'}</span>
+              <span className="opacity-60">•</span>
+              <span>{selectedGender === 'any' ? 'Any gender' : (selectedGender === 'male' ? 'Male' : 'Female')}</span>
+            </span>
+
+            {/* Country selector */}
+            <select
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+              className="px-2 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm"
+              title="Country filter"
+            >
+              <option value="any">Any Country</option>
+              <option value="us">United States</option>
+              <option value="in">India</option>
+              <option value="gb">United Kingdom</option>
+              <option value="ca">Canada</option>
+              <option value="au">Australia</option>
+              <option value="de">Germany</option>
+              <option value="fr">France</option>
+              <option value="br">Brazil</option>
+            </select>
+
+            {/* Gender quick toggle: Male */}
+            <button
+              type="button"
+              onClick={() => setSelectedGender(g => g === 'male' ? 'any' : 'male')}
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm border ${selectedGender === 'male' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700'}`}
+              title="Toggle Male filter"
+            >
+              Male {selectedGender === 'male' ? '✓' : ''}
+            </button>
+
+            {/* Stop and Next */}
+            <button
+              onClick={() => { setEndState('stopped'); handleStop(); }}
+              className="px-3 sm:px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+            >
+              Stop
+            </button>
+            <button
+              onClick={() => { setEndState(null); handleNext(); }}
+              className="px-3 sm:px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm shadow-lg shadow-blue-500/20 transition-all"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>

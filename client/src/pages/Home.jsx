@@ -71,13 +71,13 @@ export default function Home() {
   ]
 
   return (
-    <div className="min-h-screen pt-16 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
+    <div className="min-h-screen pt-16 bg-gradient-to-br from-emerald-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Hero Section */}
       <section className="py-20 px-4 relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 dark:bg-purple-900 rounded-full blur-3xl opacity-30" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300 dark:bg-indigo-900 rounded-full blur-3xl opacity-30" />
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-300 dark:bg-emerald-900 rounded-full blur-3xl opacity-30" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-green-300 dark:bg-green-900 rounded-full blur-3xl opacity-30" />
         </div>
 
         <div className="max-w-7xl mx-auto relative">
@@ -86,9 +86,9 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="inline-block mb-4 px-6 py-2 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20 backdrop-blur-sm"
+              className="inline-block mb-4 px-6 py-2 rounded-full bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20 backdrop-blur-sm"
             >
-              <span className="text-sm md:text-base bg-gradient-to-r from-indigo-500 to-purple-500 text-transparent bg-clip-text font-medium">
+              <span className="text-sm md:text-base bg-gradient-to-r from-emerald-500 to-green-500 text-transparent bg-clip-text font-medium">
                 Start connecting with people worldwide
               </span>
             </motion.div>
@@ -97,7 +97,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-transparent bg-clip-text mb-6"
+              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-transparent bg-clip-text mb-6"
             >
               Meet New People
             </motion.h1>
@@ -120,11 +120,11 @@ export default function Home() {
                 onMouseLeave={() => setHoveredCard(null)}
                 className="group relative p-8 rounded-3xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/5 dark:to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-500/5 dark:to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="p-3 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20">
-                      <ChatBubbleLeftRightIcon className="w-8 h-8 text-indigo-500" />
+                    <div className="p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20">
+                      <ChatBubbleLeftRightIcon className="w-8 h-8 text-emerald-600" />
                     </div>
                     <motion.div
                       animate={{ x: hoveredCard === 'text' ? 5 : 0 }}
@@ -146,17 +146,17 @@ export default function Home() {
                 onMouseLeave={() => setHoveredCard(null)}
                 className="group relative p-8 rounded-3xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 dark:from-purple-500/5 dark:to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-500/5 dark:to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="p-3 rounded-2xl bg-purple-500/10 dark:bg-purple-500/20">
-                      <VideoCameraIcon className="w-8 h-8 text-purple-500" />
+                    <div className="p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20">
+                      <VideoCameraIcon className="w-8 h-8 text-emerald-600" />
                     </div>
                     <motion.div
                       animate={{ x: hoveredCard === 'video' ? 5 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ArrowRightIcon className="w-6 h-6 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                      <ArrowRightIcon className="w-6 h-6 text-gray-400 group-hover:text-emerald-500 transition-colors" />
                     </motion.div>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">Video Chat</h3>
@@ -178,7 +178,7 @@ export default function Home() {
                   placeholder="Enter your interests (e.g., music, travel, gaming)"
                   value={interests}
                   onChange={(e) => setInterests(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm focus:ring-4 focus:ring-indigo-500/20 dark:focus:ring-purple-500/20 focus:border-indigo-500 dark:focus:border-purple-500 transition-all text-lg placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm focus:ring-4 focus:ring-emerald-500/20 dark:focus:ring-emerald-500/20 focus:border-emerald-500 dark:focus:border-emerald-500 transition-all text-lg placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
                 <AnimatePresence>
                   {interests && (
@@ -210,7 +210,7 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="py-24 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800"
+        className="py-24 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-gray-900 dark:to-gray-800"
       >
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -251,7 +251,7 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="py-24 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800"
+        className="py-24 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-gray-900 dark:to-gray-800"
       >
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -440,8 +440,8 @@ export default function Home() {
               },
               {
                 icon: '🚫',
-                title: 'Report System',
-                description: 'Report inappropriate behavior instantly',
+                title: 'No Harassment',
+                description: 'Zero tolerance for any form of harassment',
               },
             ].map((feature, index) => (
               <motion.div
@@ -503,7 +503,7 @@ export default function Home() {
                     transition={{ delay: index * 0.1 }}
                     className="flex items-start space-x-4"
                   >
-                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
+                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
                       <span className="text-xl">{item.icon}</span>
                     </div>
                     <div>
@@ -529,7 +529,7 @@ export default function Home() {
                   <div className="p-8 flex items-center justify-center">
                     <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                       <div className="flex items-center space-x-4 mb-6">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                           <span className="text-xl">👋</span>
                         </div>
                         <div>
@@ -553,7 +553,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+              <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
             </motion.div>
           </div>
         </div>
@@ -607,7 +607,7 @@ export default function Home() {
                 transition={{ delay: index * 0.1 }}
                 className="flex items-start space-x-6 p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all"
               >
-                <div className="w-12 h-12 flex items-center justify-center text-2xl rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
+                <div className="w-12 h-12 flex items-center justify-center text-2xl rounded-xl bg-emerald-50 dark:bg-emerald-900/30">
                   {guideline.icon}
                 </div>
                 <div>
@@ -626,7 +626,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="py-20 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-10 dark:opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-green-500 opacity-10 dark:opacity-20" />
         <div className="max-w-7xl mx-auto relative">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -644,16 +644,16 @@ export default function Home() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleStartChat('text')}
-              className="px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+              className="px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-emerald-500 to-green-500 rounded-full hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
             >
               Start Chatting Now
             </motion.button>
           </motion.div>
 
           {/* Background Elements */}
-          <div className="absolute top-0 left-0 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
-          <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
-          <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
+          <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
+          <div className="absolute top-0 right-0 w-72 h-72 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
+          <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-lime-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
         </div>
       </section>
     </div>

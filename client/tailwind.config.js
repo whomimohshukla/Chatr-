@@ -10,6 +10,11 @@ export default {
       colors: {
         primary: 'rgb(var(--color-primary) / <alpha-value>)',
         secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
+        brand: {
+          black: '#0b0c0d',
+          card: '#25282c',
+          green: '#00B140',
+        },
         dark: {
           DEFAULT: '#1F2937',
           50: '#F9FAFB',
@@ -23,6 +28,9 @@ export default {
           800: '#1F2937',
           900: '#111827',
         }
+      },
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'],
       },
       boxShadow: {
         'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
