@@ -12,7 +12,7 @@ export default {
         secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
         brand: {
           black: '#0b0c0d',
-          card: '#25282c',
+          card: '#25272c',
           green: '#00B140',
         },
         dark: {

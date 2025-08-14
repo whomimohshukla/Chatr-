@@ -48,7 +48,7 @@ export default function Home() {
       icon: UserGroupIcon,
       title: 'Anonymous Chat',
       description: 'Chat freely without revealing your identity.',
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-emerald-500 to-green-500',
     },
     {
       icon: SparklesIcon,
@@ -60,7 +60,7 @@ export default function Home() {
       icon: HeartIcon,
       title: 'Make Friends',
       description: 'Build meaningful connections with new people.',
-      color: 'from-red-500 to-rose-500',
+      color: 'from-emerald-500 to-green-500',
     },
     {
       icon: ShieldCheckIcon,
@@ -71,24 +71,24 @@ export default function Home() {
   ]
 
   return (
-    <div className="min-h-screen pt-16 bg-gradient-to-br from-emerald-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen pt-16 bg-white text-gray-900 dark:bg-brand-black dark:text-gray-100">
       {/* Hero Section */}
       <section className="py-20 px-4 relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-300 dark:bg-emerald-900 rounded-full blur-3xl opacity-30" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-green-300 dark:bg-green-900 rounded-full blur-3xl opacity-30" />
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gray-200 dark:bg-brand-card rounded-full blur-3xl opacity-30" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gray-100 dark:bg-brand-card rounded-full blur-3xl opacity-20" />
         </div>
 
-        <div className="max-w-7xl mx-auto relative">
+        <div className="w-full px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="inline-block mb-4 px-6 py-2 rounded-full bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20 backdrop-blur-sm"
+              className="inline-block mb-4 px-6 py-2 rounded-full bg-white/60 border border-gray-200 backdrop-blur-sm dark:bg-brand-card/40 dark:border-white/10"
             >
-              <span className="text-sm md:text-base bg-gradient-to-r from-emerald-500 to-green-500 text-transparent bg-clip-text font-medium">
+              <span className="text-sm md:text-base text-gray-700 dark:text-gray-200 font-medium">
                 Start connecting with people worldwide
               </span>
             </motion.div>
@@ -97,7 +97,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-transparent bg-clip-text mb-6"
+              className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-gray-900 dark:text-white"
             >
               Meet New People
             </motion.h1>
@@ -105,32 +105,33 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto"
+              className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-12"
             >
               Connect with strangers, share interests, and make new friends in a safe and engaging environment
             </motion.p>
 
             {/* Chat Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-12">
               <motion.button
                 whileHover={{ scale: 1.02, y: -5 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleStartChat('text')}
                 onMouseEnter={() => setHoveredCard('text')}
                 onMouseLeave={() => setHoveredCard(null)}
-                className="group relative p-8 rounded-3xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="group relative overflow-hidden p-8 rounded-3xl bg-white border border-gray-200 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 dark:bg-brand-card dark:border-white/10 dark:hover:shadow-black/40 hover:ring-2 hover:ring-brand-green/20"
               >
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-500/5 dark:to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative">
+                <div className="absolute inset-0 rounded-3xl bg-gray-50/70 opacity-0 group-hover:opacity-100 transition-opacity dark:bg-brand-card/20 z-0" />
+                <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-emerald-400/20 via-transparent to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient-slow z-0" />
+                <div className="relative z-10">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20">
-                      <ChatBubbleLeftRightIcon className="w-8 h-8 text-emerald-600" />
+                    <div className="p-3 rounded-2xl bg-gray-100 border border-gray-200 dark:bg-brand-black/50 dark:border-white/10">
+                      <ChatBubbleLeftRightIcon className="w-8 h-8 text-brand-green" />
                     </div>
                     <motion.div
                       animate={{ x: hoveredCard === 'text' ? 5 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ArrowRightIcon className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                      <ArrowRightIcon className="w-6 h-6 text-gray-400 group-hover:text-brand-green transition-colors" />
                     </motion.div>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">Text Chat</h3>
@@ -144,13 +145,14 @@ export default function Home() {
                 onClick={() => handleStartChat('video')}
                 onMouseEnter={() => setHoveredCard('video')}
                 onMouseLeave={() => setHoveredCard(null)}
-                className="group relative p-8 rounded-3xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="group relative overflow-hidden p-8 rounded-3xl bg-white border border-gray-200 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 dark:bg-brand-card dark:border-white/10 dark:hover:shadow-black/40 hover:ring-2 hover:ring-brand-green/20"
               >
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-500/5 dark:to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative">
+                <div className="absolute inset-0 rounded-3xl bg-gray-50/70 opacity-0 group-hover:opacity-100 transition-opacity dark:bg-brand-card/20 z-0" />
+                <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-emerald-400/20 via-transparent to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient-slow z-0" />
+                <div className="relative z-10">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20">
-                      <VideoCameraIcon className="w-8 h-8 text-emerald-600" />
+                    <div className="p-3 rounded-2xl bg-gray-100 border border-gray-200 dark:bg-brand-black/50 dark:border-white/10">
+                      <VideoCameraIcon className="w-8 h-8 text-brand-green" />
                     </div>
                     <motion.div
                       animate={{ x: hoveredCard === 'video' ? 5 : 0 }}
@@ -170,7 +172,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="max-w-md mx-auto"
+              className="w-full"
             >
               <div className="relative">
                 <input
@@ -178,7 +180,7 @@ export default function Home() {
                   placeholder="Enter your interests (e.g., music, travel, gaming)"
                   value={interests}
                   onChange={(e) => setInterests(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm focus:ring-4 focus:ring-emerald-500/20 dark:focus:ring-emerald-500/20 focus:border-emerald-500 dark:focus:border-emerald-500 transition-all text-lg placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="w-full px-6 py-4 rounded-2xl border border-gray-200 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-brand-green/20 focus:border-brand-green transition-all text-lg dark:border-white/10 dark:bg-brand-card"
                 />
                 <AnimatePresence>
                   {interests && (
@@ -186,6 +188,7 @@ export default function Home() {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
+                      type="button"
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"
                       onClick={() => setInterests('')}
                     >
@@ -210,36 +213,44 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="py-24 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-gray-900 dark:to-gray-800"
+        className="py-24 bg-gray-50 dark:bg-transparent"
       >
-        <div className="container mx-auto px-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Why Choose Stranger Connect?
+            <div className="inline-block mb-3 px-4 py-1.5 rounded-full bg-white/70 border border-gray-200 backdrop-blur-sm dark:bg-brand-card/50 dark:border-white/10">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Why Choose</span>
+            </div>
+            <h2 className="text-4xl font-extrabold mb-4">
+              <span className="text-brand-green">
+                Stranger Connect
+              </span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300">
               Everything you need for seamless conversations
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full relative z-10">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -6 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="p-8 rounded-3xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                className="group relative overflow-hidden p-8 rounded-3xl bg-white border border-gray-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 dark:bg-brand-card dark:border-white/10 hover:ring-2 hover:ring-brand-green/20"
               >
-                <div className={`p-4 rounded-2xl bg-gradient-to-br ${feature.color} bg-opacity-10 dark:bg-opacity-20 w-fit mb-6 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className={`w-8 h-8 bg-gradient-to-br ${feature.color} text-transparent bg-clip-text`} />
+                <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-emerald-400/20 via-transparent to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient-slow z-0" />
+                <div className="relative z-10">
+                  <div className={`p-4 rounded-2xl bg-gradient-to-br ${feature.color} bg-opacity-10 dark:bg-opacity-20 w-fit mb-6 group-hover:scale-110 transition-transform`}>
+                    <feature.icon className={`w-8 h-8 bg-gradient-to-br ${feature.color} text-transparent bg-clip-text`} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -267,7 +278,7 @@ export default function Home() {
             {/* Custom Avatars */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 dark:bg-brand-card dark:border-white/10"
             >
               <span className="text-4xl mb-4 block">🎭</span>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -281,7 +292,7 @@ export default function Home() {
             {/* Mini Games */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 dark:bg-brand-card dark:border-white/10"
             >
               <span className="text-4xl mb-4 block">🎮</span>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -295,7 +306,7 @@ export default function Home() {
             {/* Themes & Customization */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 dark:bg-brand-card dark:border-white/10"
             >
               <span className="text-4xl mb-4 block">🎨</span>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -309,7 +320,7 @@ export default function Home() {
             {/* Auto Translation */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 dark:bg-brand-card dark:border-white/10"
             >
               <span className="text-4xl mb-4 block">🌍</span>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -323,7 +334,7 @@ export default function Home() {
             {/* Music Sharing */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 dark:bg-brand-card dark:border-white/10"
             >
               <span className="text-4xl mb-4 block">🎵</span>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -339,7 +350,7 @@ export default function Home() {
 
       {/* How It Works Section */}
       <section className="py-20 px-4 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto relative">
+        <div className="w-full px-4 sm:px-6 lg:px-8 relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -349,7 +360,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               How It Works
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
               Connect with people in three simple steps
             </p>
           </motion.div>
@@ -406,7 +417,7 @@ export default function Home() {
 
       {/* Safety Section */}
       <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -416,7 +427,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Your Safety Matters
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               We've implemented multiple safety features to ensure a secure chatting experience
             </p>
           </motion.div>
@@ -450,15 +461,18 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all"
+                className="group relative overflow-hidden p-6 rounded-2xl bg-white border border-gray-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all dark:bg-brand-card dark:border-white/10 hover:ring-2 hover:ring-brand-green/20"
               >
-                <span className="text-3xl mb-4 block">{feature.icon}</span>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  {feature.description}
-                </p>
+                <div className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-br from-emerald-400/20 via-transparent to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient-slow z-0" />
+                <div className="relative z-10">
+                  <span className="text-3xl mb-4 block">{feature.icon}</span>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm">
+                    {feature.description}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -525,9 +539,9 @@ export default function Home() {
               className="relative"
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                <div className="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-800">
+                <div className="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-brand-card">
                   <div className="p-8 flex items-center justify-center">
-                    <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div className="w-full max-w-sm bg-white rounded-xl shadow-lg p-6 border border-gray-200 dark:bg-brand-card dark:border-white/10">
                       <div className="flex items-center space-x-4 mb-6">
                         <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                           <span className="text-xl">👋</span>
@@ -605,7 +619,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="flex items-start space-x-6 p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all"
+                className="flex items-start space-x-6 p-6 rounded-2xl bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all dark:bg-brand-card dark:border-white/10"
               >
                 <div className="w-12 h-12 flex items-center justify-center text-2xl rounded-xl bg-emerald-50 dark:bg-emerald-900/30">
                   {guideline.icon}
