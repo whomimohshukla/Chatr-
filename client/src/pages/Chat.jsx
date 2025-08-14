@@ -35,6 +35,14 @@ export default function Chat() {
   const [isConnected, setIsConnected] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const [showEmoji, setShowEmoji] = useState(false)
+  const commonEmojis = ['😀','😁','😂','🤣','😊','😍','😘','😉','😎','🤩','🫡','🤝','👍','🙏','🔥','💯','🎉','✨','🤗','😅','😭','😤','😴','🤔','🙃','😇']
+  // Country flag and label helpers for a more polished, OmeTV-like UI
+  const countryFlags = {
+    any: '🌐', us: '🇺🇸', in: '🇮🇳', gb: '🇬🇧', ca: '🇨🇦', au: '🇦🇺', de: '🇩🇪', fr: '🇫🇷', br: '🇧🇷'
+  }
+  const countryNames = {
+    any: 'Any', us: 'United States', in: 'India', gb: 'United Kingdom', ca: 'Canada', au: 'Australia', de: 'Germany', fr: 'France', br: 'Brazil'
+  }
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [handRaised, setHandRaised] = useState(false)
   const [filters, setFilters] = useState([])
@@ -42,6 +50,9 @@ export default function Chat() {
   const [showReport, setShowReport] = useState(false)
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  // New: simple matching filters
+  const [selectedCountry, setSelectedCountry] = useState('any')
+  const [selectedGender, setSelectedGender] = useState('any')
   
   const chatType = searchParams.get('type') || 'video'
   const interests = searchParams.get('interests')?.split(',').filter(Boolean) || []
@@ -91,9 +102,10 @@ export default function Chat() {
       }]);
     });
 
-    socket.current.on('match-found', async ({ room, users }) => {
+    socket.current.on('match-found', async ({ room, partner: matchedPartner }) => {
       console.log('Match found in room:', room);
       setCurrentRoom(room);
+      setPartner(matchedPartner || null);
       setIsConnecting(false);
       setIsConnected(true);
       setMessages(prev => [...prev, {
@@ -101,7 +113,42 @@ export default function Chat() {
         message: 'Connected with a stranger! Say hello 👋',
         timestamp: Date.now()
       }]);
+
+      // Initialize camera/mic and peer connection for video chats
+      if (chatType === 'video') {
+        try {
+          await initializeWebRTC();
+
+          // Decide a deterministic initiator to avoid glare using room structure
+          // Room is formatted as `${initiatorId}-${matchedId}` in server
+          const firstId = room?.split('-')[0];
+          const isInitiator = socket.current.id === firstId;
+
+          if (isInitiator) {
+            await createAndSendOffer();
+          }
+        } catch (e) {
+          console.error('Error starting WebRTC after match:', e);
+        }
+      }
     });
+
+    // Typing indicators from partner (custom relays)
+    socket.current.on('partner-typing', () => {
+      setPartnerTyping(true);
+    });
+    socket.current.on('partner-stop-typing', () => {
+      setPartnerTyping(false);
+    });
+
+    // Fallback: if server relays generic 'typing' event
+    socket.current.on('typing', (payload) => {
+      if (typeof payload === 'object') {
+        setPartnerTyping(!!payload.isTyping)
+      } else if (typeof payload === 'boolean') {
+        setPartnerTyping(!!payload)
+      }
+    })
 
     socket.current.on('receive-message', ({ message, senderId, timestamp }) => {
       console.log('Message received:', { message, senderId, timestamp });
@@ -118,6 +165,38 @@ export default function Chat() {
       // Auto scroll to bottom
       if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    });
+
+    // Unified signaling channel for WebRTC offers/answers/candidates
+    socket.current.on('video-signal', async ({ signal }) => {
+      try {
+        if (!peerConnection.current && signal.type !== 'candidate') {
+          // If we receive an offer/answer before creating, create now (requires local stream)
+          if (!localStream.current) {
+            await initializeWebRTC();
+          }
+          createPeerConnection();
+        }
+
+        const pc = peerConnection.current;
+        if (!pc) return;
+
+        if (signal.type === 'offer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.current.emit('video-signal', {
+            room: currentRoom,
+            signal: { type: 'answer', sdp: pc.localDescription },
+          });
+        } else if (signal.type === 'answer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+        } else if (signal.type === 'candidate' && signal.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        }
+      } catch (err) {
+        console.error('Error handling video-signal:', err);
       }
     });
 
@@ -236,7 +315,9 @@ export default function Chat() {
       // Join the queue with interests
       socket.current.emit('join-queue', { 
         type: chatType,
-        interests 
+        interests,
+        country: selectedCountry,
+        gender: selectedGender,
       })
 
       // Add system message
@@ -261,6 +342,27 @@ export default function Chat() {
     
     // Rejoin queue automatically
     joinQueue()
+  }
+
+  // Stop button: end current chat without auto re-queue
+  const handleStop = () => {
+    if (currentRoom) {
+      socket.current?.emit('end-chat', { room: currentRoom })
+    }
+    setCurrentRoom(null)
+    setIsConnected(false)
+    setPartner(null)
+    setMessages(prev => [...prev, {
+      type: 'system',
+      message: 'Chat ended.',
+      timestamp: Date.now()
+    }])
+  }
+
+  // Omegle/OmeTV-style Next button handler
+  const handleNext = () => {
+    // End current chat and immediately find a new match
+    handleEndChat()
   }
 
   const handleMatchFound = ({ room }) => {
@@ -327,6 +429,10 @@ export default function Chat() {
       });
       
       setMessage('');
+      // stop typing indicator immediately
+      if (typingTimeout.current) clearTimeout(typingTimeout.current)
+      setIsTyping(false)
+      socket.current?.emit('stop-typing', { room: currentRoom });
     }
   };
 
@@ -343,16 +449,25 @@ export default function Chat() {
   };
 
   const handleTyping = () => {
+    // Emit start typing once
     if (!isTyping) {
       setIsTyping(true);
-      socket.current?.emit('typing', { isTyping: true });
-      
-      // Clear typing indicator after delay
-      typingTimeout.current = setTimeout(() => {
-        setIsTyping(false);
-        socket.current?.emit('typing', { isTyping: false });
-      }, 2000);
+      if (currentRoom) {
+        socket.current?.emit('typing', { room: currentRoom });
+      } else {
+        socket.current?.emit('typing', {});
+      }
     }
+    // Debounce stop-typing
+    if (typingTimeout.current) clearTimeout(typingTimeout.current)
+    typingTimeout.current = setTimeout(() => {
+      setIsTyping(false);
+      if (currentRoom) {
+        socket.current?.emit('stop-typing', { room: currentRoom });
+      } else {
+        socket.current?.emit('stop-typing', {});
+      }
+    }, 1200);
   };
 
   const initializeWebRTC = async () => {
@@ -386,9 +501,47 @@ export default function Chat() {
       } else {
         alert('Failed to initialize video chat. Please check your camera and microphone settings.');
       }
-      // Fall back to text-only chat
-      setChatType('text');
+      // Stay in text chat mode without crashing
     }
+  };
+
+  // Create RTCPeerConnection and wire WebRTC events
+  const createPeerConnection = () => {
+    if (!localStream.current) {
+      throw new Error('Local stream not initialized');
+    }
+
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+      ],
+    });
+
+    // Add local tracks
+    localStream.current.getTracks().forEach((track) => {
+      pc.addTrack(track, localStream.current);
+    });
+
+    // Remote track handler
+    pc.ontrack = (event) => {
+      const [remoteStream] = event.streams;
+      if (remoteVideoRef.current && remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+    };
+
+    // ICE candidates to signaling
+    pc.onicecandidate = (event) => {
+      if (event.candidate && socket.current && currentRoom) {
+        socket.current.emit('video-signal', {
+          room: currentRoom,
+          signal: { type: 'candidate', candidate: event.candidate },
+        });
+      }
+    };
+
+    peerConnection.current = pc;
   };
 
   const createAndSendOffer = async () => {
@@ -399,7 +552,11 @@ export default function Chat() {
 
       const offer = await peerConnection.current.createOffer();
       await peerConnection.current.setLocalDescription(offer);
-      socket.current.emit('offer', { room: currentRoom, offer });
+      // Send via unified signaling channel
+      socket.current.emit('video-signal', {
+        room: currentRoom,
+        signal: { type: 'offer', sdp: peerConnection.current.localDescription },
+      });
     } catch (error) {
       console.error('Error creating offer:', error);
       throw error;
@@ -479,6 +636,16 @@ export default function Chat() {
                       />
                     </div>
 
+                    {/* Top Overlay Info (OmeTV-like) */}
+                    <div className="absolute top-0 left-0 right-0 p-3 pointer-events-none z-20">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 text-white text-sm backdrop-blur-md border border-white/10 shadow">
+                        <span className="text-base">{countryFlags[selectedCountry] || '🌐'}</span>
+                        <span>
+                          {countryNames[selectedCountry] || 'Any'} • {selectedGender === 'any' ? 'Any gender' : (selectedGender === 'male' ? 'Male' : 'Female')}
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Local Video */}
                     <div className="absolute top-4 right-4 w-32 sm:w-48 lg:w-56 aspect-video">
                       <video
@@ -542,19 +709,68 @@ export default function Chat() {
             {/* Chat Section */}
             <div className="bg-white dark:bg-gray-800 backdrop-blur-md rounded-2xl overflow-hidden flex flex-col h-full shadow-2xl border border-gray-200 dark:border-gray-700">
               {/* Chat Header */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm px-4 sm:px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-3">
+              <div className="bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 flex-wrap border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-2 sm:space-x-3">
                   <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
                   <span className="text-gray-900 dark:text-white font-medium">
                     {isConnected ? 'Connected' : 'Finding partner...'}
                   </span>
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-xs">
+                    <span className="text-base leading-none">{countryFlags[selectedCountry] || '🌐'}</span>
+                    <span>{countryNames[selectedCountry] || 'Any'}</span>
+                    <span className="opacity-60">•</span>
+                    <span>{selectedGender === 'any' ? 'Any gender' : (selectedGender === 'male' ? 'Male' : 'Female')}</span>
+                  </span>
                 </div>
-                <button
-                  onClick={() => setShowReport(true)}
-                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                >
-                  <FlagIcon className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {/* Country selector */}
+                  <select
+                    value={selectedCountry}
+                    onChange={(e) => setSelectedCountry(e.target.value)}
+                    className="px-2 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-sm"
+                    title="Country filter"
+                  >
+                    <option value="any">Any Country</option>
+                    <option value="us">United States</option>
+                    <option value="in">India</option>
+                    <option value="gb">United Kingdom</option>
+                    <option value="ca">Canada</option>
+                    <option value="au">Australia</option>
+                    <option value="de">Germany</option>
+                    <option value="fr">France</option>
+                    <option value="br">Brazil</option>
+                  </select>
+
+                  {/* Gender quick toggle: Male */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGender(g => g === 'male' ? 'any' : 'male')}
+                    className={`px-3 py-2 rounded-lg text-sm border ${selectedGender === 'male' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700'}`}
+                    title="Toggle Male filter"
+                  >
+                    Male {selectedGender === 'male' ? '✓' : ''}
+                  </button>
+
+                  {/* Stop and Next */}
+                  <button
+                    onClick={handleStop}
+                    className="px-3 sm:px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm sm:text-base hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+                  >
+                    Stop
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="px-3 sm:px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base shadow-lg shadow-blue-500/20 transition-all"
+                  >
+                    Next
+                  </button>
+                  <button
+                    onClick={() => setShowReport(true)}
+                    className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  >
+                    <FlagIcon className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Messages */}
@@ -581,16 +797,37 @@ export default function Chat() {
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white mr-4'
                         }`}
                       >
-                        {msg.message}
+                        <div>{msg.message}</div>
+                        {msg.timestamp && (
+                          <div className={`text-[10px] mt-1 opacity-80 ${msg.senderId === socket.current?.id ? 'text-white/80' : 'text-gray-500 dark:text-gray-300/80'}`}>
+                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        )}
                       </div>
                     )}
                   </motion.div>
                 ))}
               </div>
 
+              {/* Typing indicator */}
+              {partnerTyping && (
+                <div className="px-4 sm:px-6 pb-1 text-gray-500 dark:text-gray-400 text-sm">
+                  Stranger is typing...
+                </div>
+              )}
+
               {/* Chat Input */}
               <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
-                <div className="flex space-x-3">
+                <div className="relative flex items-center space-x-3">
+                  {/* Emoji toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setShowEmoji(v => !v)}
+                    className="px-3 py-2 rounded-xl bg-white dark:bg-gray-700 text-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
+                    aria-label="Toggle emoji picker"
+                  >
+                    🙂
+                  </button>
                   <input
                     type="text"
                     value={message}
@@ -610,6 +847,28 @@ export default function Chat() {
                   >
                     Send
                   </button>
+
+                  {/* Emoji palette */}
+                  {showEmoji && (
+                    <div className="absolute bottom-full mb-2 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-2 shadow-2xl max-w-[90vw] sm:max-w-[380px] w-max z-30">
+                      <div className="grid grid-cols-8 gap-1">
+                        {commonEmojis.map((em) => (
+                          <button
+                            key={em}
+                            type="button"
+                            className="w-8 h-8 sm:w-9 sm:h-9 text-xl rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => {
+                              setMessage((prev) => (prev || '') + em)
+                              setShowEmoji(false)
+                              handleTyping()
+                            }}
+                          >
+                            {em}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
