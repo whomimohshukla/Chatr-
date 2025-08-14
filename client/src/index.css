@@ -11,6 +11,45 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Fluid typography and sizing for better zoom responsiveness */
+  .text-fluid-sm {
+    font-size: clamp(0.85rem, 0.8rem + 0.30vw, 0.95rem);
+  }
+  .text-fluid-base {
+    font-size: clamp(0.95rem, 0.90rem + 0.35vw, 1.125rem);
+  }
+  .text-fluid-lg {
+    font-size: clamp(1.10rem, 1.00rem + 0.80vw, 1.50rem);
+  }
+  .fluid-icon {
+    width: clamp(1.0rem, 0.8rem + 1vw, 1.5rem);
+    height: clamp(1.0rem, 0.8rem + 1vw, 1.5rem);
+  }
+
+  /* Container that adapts at zoom while keeping sane max width */
+  .container-fluid {
+    width: min(100% - 2rem, 1280px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Prevent bottom fixed bar overlap; adapts to safe-area on mobile */
+  .pb-control-safe {
+    padding-bottom: max(6rem, calc(env(safe-area-inset-bottom) + 5rem));
+  }
+
+  /* Smooth inertial scroll on touch devices */
+  .scroll-smooth-touch {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Consistent green focus ring utility */
+  .ring-brand-focus:focus,
+  .ring-brand-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 177, 64, 0.35);
+  }
 }
 
 a {
