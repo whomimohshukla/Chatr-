@@ -639,14 +639,14 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-brand-black pt-16 pb-36 relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-brand-black pt-16 pb-control-safe relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-emerald-500/5 to-transparent dark:from-emerald-500/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-emerald-400/5 to-transparent dark:from-emerald-400/10 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container-fluid px-4 pb-28 sm:pb-32 relative z-10">
         <div className="max-w-[1600px] mx-auto">
           {/* Main Content */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[calc(100vh-12rem)] place-items-center place-content-center">
@@ -697,7 +697,7 @@ export default function Chat() {
                             : 'bg-red-500 hover:bg-red-600'
                         } text-white backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-200`}
                       >
-                        <MicrophoneIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <MicrophoneIcon className="fluid-icon" />
                       </button>
                       <button
                         onClick={toggleVideo}
@@ -707,7 +707,7 @@ export default function Chat() {
                             : 'bg-red-500 hover:bg-red-600'
                         } text-white backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-200`}
                       >
-                        <VideoCameraIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <VideoCameraIcon className="fluid-icon" />
                       </button>
                       <button
                         onClick={() => { setEndState('closed'); handleEndChat(); }}
@@ -721,11 +721,11 @@ export default function Chat() {
                     {/* End/Stop Overlay */}
                     {endState && (
                       <div className="absolute inset-0 z-40 bg-brand-black/70 backdrop-blur-sm flex items-center justify-center">
-                        <div className="bg-brand-card rounded-2xl p-8 max-w-md w-full shadow-2xl border border-brand-black/10">
-                          <h3 className="text-2xl font-bold text-white mb-2">
+                        <div className="bg-brand-card rounded-2xl p-8 max-w-md w-full shadow-2xl border border-gray-200 dark:border-white/10">
+                          <h3 className="text-fluid-lg font-bold text-white mb-2">
                             {endState === 'stopped' ? 'Chat Stopped' : 'Chat Ended'}
                           </h3>
-                          <p className="text-gray-300 mb-6">
+                          <p className="text-gray-300 text-fluid-sm mb-6">
                             {endState === 'stopped' 
                               ? 'You have stopped the current chat. You can find a new partner anytime.'
                               : 'You ended the chat. Want to meet someone new?'}
@@ -733,13 +733,13 @@ export default function Chat() {
                           <div className="flex items-center justify-center gap-3 flex-wrap">
                             <button
                               onClick={() => { setEndState(null); handleNext(); }}
-                              className="px-5 py-2.5 rounded-xl bg-brand-green hover:brightness-110 text-white shadow-lg shadow-emerald-500/20"
+                              className="px-5 py-2.5 rounded-xl bg-brand-green hover:brightness-110 text-white shadow-lg shadow-emerald-500/20 text-fluid-base"
                             >
                               Next
                             </button>
                             <button
                               onClick={() => setEndState(null)}
-                              className="px-5 py-2.5 rounded-xl bg-brand-card text-gray-300 hover:bg-brand-black/60 border border-brand-black/10"
+                              className="px-5 py-2.5 rounded-xl bg-brand-card text-gray-300 hover:bg-brand-black/60 border border-brand-black/10 text-fluid-base"
                             >
                               Close
                             </button>
@@ -753,8 +753,8 @@ export default function Chat() {
                       <div className="absolute inset-0 bg-brand-black/90 backdrop-blur-sm flex items-center justify-center z-30">
                         <div className="text-center px-6">
                           <div className="w-16 h-16 border-4 border-brand-green border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                          <h3 className="text-2xl font-bold text-white mb-2">Looking for someone...</h3>
-                          <p className="text-gray-400 text-sm">
+                          <h3 className="text-fluid-lg font-bold text-white mb-2">Looking for someone...</h3>
+                          <p className="text-gray-400 text-fluid-sm">
                             {interests.length > 0
                               ? `Matching with people interested in: ${interests.join(', ')}`
                               : 'Finding a random person to chat with'}
@@ -773,7 +773,7 @@ export default function Chat() {
               <div className="bg-brand-black/50 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-center gap-2 flex-wrap border-b border-brand-black/10">
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
-                  <span className="text-white font-medium">
+                  <span className="text-white font-medium text-fluid-base">
                     {isConnected ? 'Connected' : 'Finding partner...'}
                   </span>
                 </div>
@@ -783,7 +783,7 @@ export default function Chat() {
               {/* Messages */}
               <div
                 ref={chatContainerRef}
-                className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-white/10 scrollbar-track-transparent"
+                className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-white/10 scrollbar-track-transparent scroll-smooth-touch"
               >
                 {messages.map((msg, index) => (
                   <motion.div
@@ -793,7 +793,7 @@ export default function Chat() {
                     className={`flex ${msg.type === 'system' ? 'justify-center' : msg.senderId === socket.current?.id ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.type === 'system' ? (
-                      <div className="bg-brand-black/20 text-gray-300 px-4 py-1.5 rounded-full text-sm backdrop-blur-sm">
+                      <div className="bg-brand-black/20 text-gray-300 px-4 py-1.5 rounded-full text-fluid-sm backdrop-blur-sm">
                         {msg.message}
                       </div>
                     ) : (
@@ -804,7 +804,7 @@ export default function Chat() {
                             : 'bg-brand-card text-gray-300 mr-4'
                         }`}
                       >
-                        <div>{msg.message}</div>
+                        <div className="text-fluid-base">{msg.message}</div>
                         {msg.timestamp && (
                           <div className={`text-[10px] mt-1 opacity-80 ${msg.senderId === socket.current?.id ? 'text-white/80' : 'text-gray-400/80'}`}>
                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -830,7 +830,7 @@ export default function Chat() {
                   <button
                     type="button"
                     onClick={() => setShowEmoji(v => !v)}
-                    className="px-3 py-2 rounded-xl bg-white dark:bg-brand-card text-xl border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-brand-black/60"
+                    className="px-3 py-2 rounded-xl bg-white dark:bg-brand-card text-xl border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-brand-black/60 ring-brand-focus"
                     aria-label="Toggle emoji picker"
                   >
                     🙂
@@ -844,15 +844,15 @@ export default function Chat() {
                     onKeyUp={handleKeyUp}
                     autoFocus
                     placeholder="Type a message..."
-                    className="flex-1 bg-white dark:bg-brand-card text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-brand-green/50 border border-gray-200 dark:border-white/10 text-sm sm:text-base"
+                    className="flex-1 bg-white dark:bg-brand-card text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none ring-brand-focus border border-gray-200 dark:border-white/10 text-sm sm:text-base"
                   />
                   <button
                     onClick={handleSendMessage}
-                    disabled={!message.trim()}
+                    type="button"
                     className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-all duration-200 text-sm sm:text-base ${
                       message.trim()
-                        ? 'bg-brand-green hover:brightness-110 text-white shadow-lg shadow-emerald-500/20 transform hover:scale-105'
-                        : 'bg-gray-100 dark:bg-brand-card text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-white/10'
+                        ? 'bg-brand-green hover:brightness-110 text-white shadow-lg shadow-emerald-500/20 transform hover:scale-105 text-fluid-base'
+                        : 'bg-gray-100 dark:bg-brand-card text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-white/10 text-fluid-base'
                     }`}
                   >
                     Send
