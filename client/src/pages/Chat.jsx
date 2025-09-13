@@ -825,12 +825,12 @@ export default function Chat() {
 
               {/* Chat Input */}
               <div className="p-3 sm:p-4 bg-gray-50 dark:bg-brand-black/50 backdrop-blur-sm border-t border-gray-200 dark:border-white/10">
-                <div className="relative flex items-center space-x-3">
+                <div className="relative flex items-center gap-2 sm:gap-3 flex-wrap w-full">
                   {/* Emoji toggle */}
                   <button
                     type="button"
                     onClick={() => setShowEmoji(v => !v)}
-                    className="px-3 py-2 rounded-xl bg-white dark:bg-brand-card text-xl border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-brand-black/60 ring-brand-focus"
+                    className="hidden sm:inline-flex px-3 py-2 rounded-xl bg-white dark:bg-brand-card text-xl border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-brand-black/60 ring-brand-focus shrink-0"
                     aria-label="Toggle emoji picker"
                   >
                     🙂
@@ -844,12 +844,12 @@ export default function Chat() {
                     onKeyUp={handleKeyUp}
                     autoFocus
                     placeholder="Type a message..."
-                    className="flex-1 bg-white dark:bg-brand-card text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none ring-brand-focus border border-gray-200 dark:border-white/10 text-sm sm:text-base"
+                    className="min-w-0 w-0 flex-1 basis-0 bg-white dark:bg-brand-card text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none ring-brand-focus border border-gray-200 dark:border-white/10 text-sm sm:text-base"
                   />
                   <button
                     onClick={handleSendMessage}
                     type="button"
-                    className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-all duration-200 text-sm sm:text-base ${
+                    className={`shrink-0 w-full sm:w-auto basis-full sm:basis-auto mt-2 sm:mt-0 px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl font-medium transition-all duration-200 text-sm sm:text-base ${
                       message.trim()
                         ? 'bg-brand-green hover:brightness-110 text-white shadow-lg shadow-emerald-500/20 transform hover:scale-105 text-fluid-base'
                         : 'bg-gray-100 dark:bg-brand-card text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-white/10 text-fluid-base'
