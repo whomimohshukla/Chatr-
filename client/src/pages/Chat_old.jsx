@@ -639,20 +639,16 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-brand-black pt-16 pb-control-safe relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-emerald-500/5 to-transparent dark:from-emerald-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-emerald-400/5 to-transparent dark:from-emerald-400/10 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="container-fluid px-0 pb-28 sm:pb-32 relative z-10">
-        <div className="w-full">
-          {/* Main Content */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[calc(100vh-12rem)] items-stretch">
-            {/* Video Section */}
-            <div className="xl:col-span-2 h-full flex flex-col w-full">
-              <div className="bg-white/90 dark:bg-brand-card/80 backdrop-blur-md rounded-none md:rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-white/10 relative w-full h-full">
+    <div className="min-h-screen bg-gray-900 pt-16 relative overflow-hidden">
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"></div>
+      
+      <div className="relative z-10 h-[calc(100vh-4rem)]">
+        {/* Main Content - Full Screen Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
+          {/* Video Section - Takes most space */}
+          <div className="lg:col-span-3 relative bg-black">
+            <div className="w-full h-full relative">
                 {chatType === 'video' && (
                   <>
                     {/* Remote Video */}

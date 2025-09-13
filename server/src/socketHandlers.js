@@ -8,6 +8,10 @@ const userQueues = {
   video: []
 }
 const userInterests = new Map()
+// Desired filters provided by user (what they want to match with)
+const userDesired = new Map() // socketId -> { country: 'any'|'us'|..., gender: 'any'|'male'|'female' }
+// Optional self profile of the user (who they are)
+const userProfile = new Map() // socketId -> { country?: string, gender?: string }
 const userReports = new Map()
 const userBans = new Set()
 
@@ -23,6 +27,8 @@ export const setupSocketHandlers = (server) => {
     console.log('User connected:', socket.id)
 
     socket.on('join-queue', handleJoinQueue(socket, io))
+    socket.on('end-chat', handleEndChat(socket, io))
+    socket.on('video-signal', handleVideoSignal(socket, io))
     socket.on('send-message', handleSendMessage(socket, io))
     socket.on('typing', handleTyping(socket, io))
     socket.on('stop-typing', handleStopTyping(socket, io))
@@ -36,7 +42,7 @@ export const setupSocketHandlers = (server) => {
   return io
 }
 
-const handleJoinQueue = (socket, io) => ({ type, interests }) => {
+const handleJoinQueue = (socket, io) => ({ type, interests, country, gender, selfCountry, selfGender }) => {
   if (userBans.has(socket.id)) {
     socket.emit('banned')
     return
@@ -54,18 +60,47 @@ const handleJoinQueue = (socket, io) => ({ type, interests }) => {
     userInterests.set(socket.id, new Set(interests))
   }
 
-  // Find match based on interests
-  let matchedUser = null
-  if (interests && interests.length > 0) {
-    matchedUser = queue.find(id => {
-      const userInts = userInterests.get(id)
-      return userInts && interests.some(int => userInts.has(int))
+  // Store desired filters
+  userDesired.set(socket.id, {
+    country: country || 'any',
+    gender: gender || 'any',
+  })
+
+  // Optionally store user's own profile if provided (can be used to honor others' filters)
+  if (selfCountry || selfGender) {
+    userProfile.set(socket.id, {
+      country: selfCountry,
+      gender: selfGender,
     })
   }
 
-  // If no interest match, get first available user
-  if (!matchedUser && queue.length > 0) {
-    matchedUser = queue[0]
+  // Find match based on interests
+  let matchedUser = null
+  const want = userDesired.get(socket.id) || { country: 'any', gender: 'any' }
+  for (const id of queue) {
+    // Interest check (if both sides have interests, require overlap)
+    const otherInts = userInterests.get(id)
+    const interestOk = !interests?.length || !otherInts?.size
+      ? true
+      : interests.some(int => otherInts.has(int))
+
+    if (!interestOk) continue
+
+    // Country/Gender desired filters: try to respect if the other has a self profile
+    const otherProfile = userProfile.get(id) || {}
+    const countryOk = want.country === 'any' || (otherProfile.country ? otherProfile.country === want.country : true)
+    const genderOk = want.gender === 'any' || (otherProfile.gender ? otherProfile.gender === want.gender : true)
+    if (!countryOk || !genderOk) continue
+
+    // Also check reciprocal desires if available
+    const otherWant = userDesired.get(id)
+    const myProfile = userProfile.get(socket.id) || {}
+    const recipCountryOk = !otherWant || otherWant.country === 'any' || (myProfile.country ? myProfile.country === otherWant.country : true)
+    const recipGenderOk = !otherWant || otherWant.gender === 'any' || (myProfile.gender ? myProfile.gender === otherWant.gender : true)
+    if (!recipCountryOk || !recipGenderOk) continue
+
+    matchedUser = id
+    break
   }
 
   if (matchedUser) {
@@ -83,6 +118,23 @@ const handleJoinQueue = (socket, io) => ({ type, interests }) => {
   } else {
     queue.push(socket.id)
     socket.emit('waiting')
+  }
+}
+
+// Relay WebRTC signaling messages within a room
+const handleVideoSignal = (socket, io) => ({ room, signal }) => {
+  if (!rooms.has(room)) return
+  socket.to(room).emit('video-signal', { signal, from: socket.id })
+}
+
+// End chat: notify the room and tear it down
+const handleEndChat = (socket, io) => ({ room }) => {
+  if (!rooms.has(room)) return
+  const roomData = rooms.get(room)
+  io.to(room).emit('chat-ended')
+  rooms.delete(room)
+  for (const uid of roomData.users) {
+    io.sockets.sockets.get(uid)?.leave(room)
   }
 }
 
@@ -177,4 +229,6 @@ const handleDisconnect = (socket, io) => () => {
 
   // Clean up interests
   userInterests.delete(socket.id)
+  userDesired.delete(socket.id)
+  userProfile.delete(socket.id)
 }

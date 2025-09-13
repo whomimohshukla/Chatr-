@@ -1,8 +1,4 @@
 
-
-
-
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -97,7 +93,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-gray-900 dark:text-white"
+              className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-emerald-500 to-green-600 dark:from-emerald-400 dark:to-green-400 bg-clip-text text-transparent animate-gradient-text"
             >
               Meet New People
             </motion.h1>

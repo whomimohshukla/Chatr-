@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export default function Navbar() {
+  const location = useLocation()
   // Compute initial theme synchronously to avoid light flash; default to dark
   const [isDark, setIsDark] = useState(() => {
     try {
@@ -49,15 +50,29 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8 relative">
             {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                className="text-gray-600 dark:text-gray-300 hover:text-brand-green dark:hover:text-brand-green transition-colors"
-              >
-                {item.name}
-              </Link>
+              <div key={item.name} className="relative">
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `pb-1 transition-colors ${isActive ? 'text-brand-green' : 'text-gray-600 dark:text-gray-300 hover:text-brand-green dark:hover:text-brand-green'}`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span>{item.name}</span>
+                      {isActive && (
+                        <motion.div
+                          layoutId="nav-underline"
+                          className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-green rounded-full"
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        />
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              </div>
             ))}
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -102,14 +117,27 @@ export default function Navbar() {
       >
         <div className="px-4 py-3 space-y-3">
           {navItems.map((item) => (
-            <Link
+            <NavLink
               key={item.name}
               to={item.path}
               onClick={() => setIsMenuOpen(false)}
-              className="block text-gray-600 dark:text-gray-300 hover:text-brand-green dark:hover:text-brand-green transition-colors"
+              className={({ isActive }) =>
+                `block pb-1 ${isActive ? 'text-brand-green' : 'text-gray-600 dark:text-gray-300 hover:text-brand-green dark:hover:text-brand-green'}`
+              }
             >
-              {item.name}
-            </Link>
+              {({ isActive }) => (
+                <div className="relative inline-block">
+                  <span>{item.name}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-underline"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-green rounded-full"
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                </div>
+              )}
+            </NavLink>
           ))}
           <motion.button
             whileHover={{ scale: 1.05 }}
