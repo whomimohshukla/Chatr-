@@ -38,6 +38,11 @@
     padding-bottom: max(6rem, calc(env(safe-area-inset-bottom) + 5rem));
   }
 
+  /* Prevent top navbar overlap; adapts to safe-area on mobile */
+  .pt-nav-safe {
+    padding-top: max(4.5rem, calc(env(safe-area-inset-top) + 4.5rem));
+  }
+
   /* Smooth inertial scroll on touch devices */
   .scroll-smooth-touch {
     -webkit-overflow-scrolling: touch;
