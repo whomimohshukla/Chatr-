@@ -5,6 +5,11 @@ import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/out
 
 export default function Navbar() {
   const location = useLocation()
+  const params = new URLSearchParams(location.search)
+  const chatType = params.get('type')
+  const isHomeActive = location.pathname === '/'
+  const isTextActive = location.pathname === '/chat' && (chatType === 'text')
+  const isVideoActive = location.pathname === '/chat' && (chatType === 'video' || chatType === null)
   // Compute initial theme synchronously to avoid light flash; default to dark
   const [isDark, setIsDark] = useState(() => {
     try {
@@ -32,14 +37,17 @@ export default function Navbar() {
     } catch {}
   }, [isDark])
 
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Text Chat', path: '/chat?type=text' },
-    { name: 'Video Chat', path: '/chat?type=video' },
-  ]
+  // Close mobile menu on route changes
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [location.pathname, location.search])
+
+  const linkBase = 'px-2 pb-1 text-sm font-medium tracking-wide transition-colors'
+  const activeClass = 'text-brand-green'
+  const inactiveClass = 'text-gray-700 dark:text-gray-300 hover:text-brand-green dark:hover:text-brand-green'
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-brand-black/80 backdrop-blur-lg border-b border-gray-200 dark:border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-brand-black/80 backdrop-blur-lg border-b border-gray-200/70 dark:border-white/10 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -50,35 +58,42 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8 relative">
-            {navItems.map((item) => (
-              <div key={item.name} className="relative">
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `pb-1 transition-colors ${isActive ? 'text-brand-green' : 'text-gray-600 dark:text-gray-300 hover:text-brand-green dark:hover:text-brand-green'}`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <span>{item.name}</span>
-                      {isActive && (
-                        <motion.div
-                          layoutId="nav-underline"
-                          className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-green rounded-full"
-                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                    </>
-                  )}
-                </NavLink>
-              </div>
-            ))}
+          <div className="hidden md:flex items-center gap-6 relative">
+            <div className="relative">
+              <Link to="/" className={`${linkBase} ${isHomeActive ? activeClass : inactiveClass}`}>
+                Home
+              </Link>
+              {isHomeActive && (
+                <motion.div layoutId="nav-underline" className="absolute -bottom-1 left-1 right-1 h-0.5 bg-brand-green/90 rounded-full" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+              )}
+            </div>
+            <div className="relative">
+              <Link to="/chat?type=text" className={`${linkBase} ${isTextActive ? activeClass : inactiveClass}`}>
+                Text Chat
+              </Link>
+              {isTextActive && (
+                <motion.div layoutId="nav-underline" className="absolute -bottom-1 left-1 right-1 h-0.5 bg-brand-green/90 rounded-full" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+              )}
+            </div>
+            <div className="relative">
+              <Link to="/chat?type=video" className={`${linkBase} ${isVideoActive ? activeClass : inactiveClass}`}>
+                Video Chat
+              </Link>
+              {isVideoActive && (
+                <motion.div layoutId="nav-underline" className="absolute -bottom-1 left-1 right-1 h-0.5 bg-brand-green/90 rounded-full" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+              )}
+            </div>
+            <Link
+              to="/chat?type=video"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white text-sm font-semibold shadow-md hover:shadow-lg hover:brightness-110 transition-all border border-emerald-500/10"
+            >
+              <span>Start Chat</span>
+            </Link>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsDark(!isDark)}
-              className="p-2 rounded-xl bg-gray-100 dark:bg-brand-card hover:bg-gray-200 dark:hover:bg-brand-black/60 transition-colors border border-transparent dark:border-white/10"
+              className="p-2 rounded-xl bg-gray-100 dark:bg-brand-card hover:bg-gray-200 dark:hover:bg-brand-black/60 transition-colors border border-gray-200 dark:border-white/10"
             >
               {isDark ? (
                 <SunIcon className="w-5 h-5 text-yellow-500" />
@@ -113,37 +128,30 @@ export default function Navbar() {
           height: isMenuOpen ? 'auto' : 0,
           opacity: isMenuOpen ? 1 : 0,
         }}
-        className="md:hidden overflow-hidden bg-white dark:bg-brand-black border-b border-gray-200 dark:border-white/10"
+        className="md:hidden overflow-hidden bg-white/95 dark:bg-brand-black/95 backdrop-blur-lg border-b border-gray-200/70 dark:border-white/10 shadow"
       >
         <div className="px-4 py-3 space-y-3">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              onClick={() => setIsMenuOpen(false)}
-              className={({ isActive }) =>
-                `block pb-1 ${isActive ? 'text-brand-green' : 'text-gray-600 dark:text-gray-300 hover:text-brand-green dark:hover:text-brand-green'}`
-              }
-            >
-              {({ isActive }) => (
-                <div className="relative inline-block">
-                  <span>{item.name}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-underline"
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-green rounded-full"
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                </div>
-              )}
-            </NavLink>
-          ))}
+          <Link to="/" onClick={() => setIsMenuOpen(false)} className={`block pb-1 text-base ${isHomeActive ? activeClass : inactiveClass}`}>
+            Home
+          </Link>
+          <Link to="/chat?type=text" onClick={() => setIsMenuOpen(false)} className={`block pb-1 text-base ${isTextActive ? activeClass : inactiveClass}`}>
+            Text Chat
+          </Link>
+          <Link to="/chat?type=video" onClick={() => setIsMenuOpen(false)} className={`block pb-1 text-base ${isVideoActive ? activeClass : inactiveClass}`}>
+            Video Chat
+          </Link>
+          <Link
+            to="/chat?type=video"
+            onClick={() => setIsMenuOpen(false)}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white text-sm font-semibold shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+          >
+            Start Chat
+          </Link>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsDark(!isDark)}
-            className="w-full p-2 rounded-xl bg-gray-100 dark:bg-brand-card hover:bg-gray-200 dark:hover:bg-brand-black/60 transition-colors flex items-center space-x-2 border border-transparent dark:border-white/10"
+            className="w-full p-2 rounded-xl bg-gray-100 dark:bg-brand-card hover:bg-gray-200 dark:hover:bg-brand-black/60 transition-colors flex items-center space-x-2 border border-gray-200 dark:border-white/10"
           >
             {isDark ? (
               <>

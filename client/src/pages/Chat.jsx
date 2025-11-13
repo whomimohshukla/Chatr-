@@ -170,6 +170,11 @@ export default function Chat() {
       }
     });
 
+    // Files and hand-raise events
+    socket.current.on('file-received', handleFileReceived)
+    socket.current.on('hand-raised', () => setHandRaised(true))
+    socket.current.on('hand-lowered', () => setHandRaised(false))
+
     // Unified signaling channel for WebRTC offers/answers/candidates
     socket.current.on('video-signal', async ({ signal }) => {
       try {
@@ -639,20 +644,20 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-brand-black pt-16 pb-control-safe relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-brand-black pt-nav-safe pb-control-safe relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-emerald-500/5 to-transparent dark:from-emerald-500/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-emerald-400/5 to-transparent dark:from-emerald-400/10 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="container-fluid px-0 pb-28 sm:pb-32 relative z-10">
+      <div className="w-full px-0 pb-28 sm:pb-32 relative z-10">
         <div className="w-full">
           {/* Main Content */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[calc(100vh-12rem)] items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 sm:gap-4 lg:gap-6 min-h-[calc(100vh-12rem)] items-stretch">
             {/* Video Section */}
-            <div className="xl:col-span-2 h-full flex flex-col w-full">
-              <div className="bg-white/90 dark:bg-brand-card/80 backdrop-blur-md rounded-none md:rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-white/10 relative w-full h-full">
+            <div className="lg:col-span-2 h-full flex flex-col w-full">
+              <div className="bg-white/90 dark:bg-brand-card/80 backdrop-blur-md rounded-none md:rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-white/10 relative w-full h-[70svh] sm:h-[70vh] lg:h-full min-h-[320px] mt-2 md:mt-0">
                 {chatType === 'video' && (
                   <>
                     {/* Remote Video */}
@@ -768,16 +773,19 @@ export default function Chat() {
             </div>
 
             {/* Chat Section */}
-            <div className="bg-brand-card backdrop-blur-md rounded-2xl overflow-hidden flex flex-col h-full shadow-2xl border border-brand-black/10 w-full mx-auto">
-              {/* Chat Header (minimal, centered) */}
-              <div className="bg-brand-black/50 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-center gap-2 flex-wrap border-b border-brand-black/10">
+            <div className="bg-brand-card backdrop-blur-md rounded-none md:rounded-2xl overflow-hidden flex flex-col h-[50vh] sm:h-[55vh] lg:h-full min-h-[280px] shadow-2xl border border-brand-black/10 w-full mx-auto">
+              {/* Chat Header (centered, with status and type) */}
+              <div className="bg-brand-black/50 backdrop-blur-sm px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-center gap-3 sm:gap-4 flex-wrap border-b border-brand-black/10">
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
-                  <span className="text-white font-medium text-fluid-base">
+                  <span className="text-white font-medium text-fluid-base tracking-tight">
                     {isConnected ? 'Connected' : 'Finding partner...'}
                   </span>
                 </div>
-                
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white border border-white/10 text-[12px] sm:text-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  {chatType === 'video' ? 'Video Chat' : 'Text Chat'}
+                </span>
               </div>
 
               {/* Messages */}
@@ -798,15 +806,17 @@ export default function Chat() {
                       </div>
                     ) : (
                       <div
-                        className={`max-w-[85%] sm:max-w-[75%] px-4 py-2.5 rounded-2xl shadow-lg ${
+                        className={`max-w-[85%] sm:max-w-[75%] px-4 py-3 rounded-2xl shadow-lg ring-1 ${
                           msg.senderId === socket.current?.id
-                            ? 'bg-brand-green text-white ml-4'
-                            : 'bg-brand-card text-gray-300 mr-4'
+                            ? 'bg-brand-green text-white ml-4 ring-emerald-500/10'
+                            : 'bg-brand-card text-gray-200 mr-4 ring-white/10'
                         }`}
                       >
-                        <div className="text-fluid-base">{msg.message}</div>
+                        <div className="text-fluid-base leading-relaxed tracking-tight whitespace-pre-wrap break-words">
+                          {msg.message}
+                        </div>
                         {msg.timestamp && (
-                          <div className={`text-[10px] mt-1 opacity-80 ${msg.senderId === socket.current?.id ? 'text-white/80' : 'text-gray-400/80'}`}>
+                          <div className={`text-[10px] mt-1 opacity-80 ${msg.senderId === socket.current?.id ? 'text-white/85' : 'text-gray-400/85'}`}>
                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}

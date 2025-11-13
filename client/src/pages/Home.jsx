@@ -107,14 +107,14 @@ export default function Home() {
             </motion.p>
 
             {/* Chat Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full mb-10 sm:mb-12">
               <motion.button
                 whileHover={{ scale: 1.02, y: -5 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleStartChat('text')}
                 onMouseEnter={() => setHoveredCard('text')}
                 onMouseLeave={() => setHoveredCard(null)}
-                className="group relative overflow-hidden p-8 rounded-3xl bg-white border border-gray-200 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 dark:bg-brand-card dark:border-white/10 dark:hover:shadow-black/40 hover:ring-2 hover:ring-brand-green/20"
+                className="group relative overflow-hidden p-5 sm:p-6 md:p-8 rounded-3xl bg-white border border-gray-200 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 dark:bg-brand-card dark:border-white/10 dark:hover:shadow-black/40 hover:ring-2 hover:ring-brand-green/20"
               >
                 <div className="absolute inset-0 rounded-3xl bg-gray-50/70 opacity-0 group-hover:opacity-100 transition-opacity dark:bg-brand-card/20 z-0" />
                 <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-emerald-400/20 via-transparent to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient-slow z-0" />
@@ -141,7 +141,7 @@ export default function Home() {
                 onClick={() => handleStartChat('video')}
                 onMouseEnter={() => setHoveredCard('video')}
                 onMouseLeave={() => setHoveredCard(null)}
-                className="group relative overflow-hidden p-8 rounded-3xl bg-white border border-gray-200 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 dark:bg-brand-card dark:border-white/10 dark:hover:shadow-black/40 hover:ring-2 hover:ring-brand-green/20"
+                className="group relative overflow-hidden p-5 sm:p-6 md:p-8 rounded-3xl bg-white border border-gray-200 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 dark:bg-brand-card dark:border-white/10 dark:hover:shadow-black/40 hover:ring-2 hover:ring-brand-green/20"
               >
                 <div className="absolute inset-0 rounded-3xl bg-gray-50/70 opacity-0 group-hover:opacity-100 transition-opacity dark:bg-brand-card/20 z-0" />
                 <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-emerald-400/20 via-transparent to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient-slow z-0" />
@@ -274,7 +274,7 @@ export default function Home() {
             {/* Custom Avatars */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 dark:bg-brand-card dark:border-white/10"
+              className="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200 dark:bg-brand-card dark:border-white/10"
             >
               <span className="text-4xl mb-4 block">🎭</span>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
